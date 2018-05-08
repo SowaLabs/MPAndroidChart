@@ -126,6 +126,10 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
 
                 saveTouchStart(event);
 
+                // set highlight immediately on initial touch
+                if (mChart.isHighlightPerDragEnabled())
+                    performHighlightDrag(event);
+
                 break;
 
             case MotionEvent.ACTION_POINTER_DOWN:
@@ -258,6 +262,9 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
                     mChart.postInvalidate();
                 }
 
+                // hide highlighter
+                performHighlight(null, event);
+
                 mTouchMode = NONE;
                 mChart.enableScroll();
 
@@ -276,6 +283,9 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
                 break;
 
             case MotionEvent.ACTION_CANCEL:
+
+                // hide highlighter
+                performHighlight(null, event);
 
                 mTouchMode = NONE;
                 endAction(event);
