@@ -103,7 +103,44 @@ public class LineChartRenderer extends LineRadarRenderer {
         c.drawBitmap(drawBitmap, 0, 0, mRenderPaint);
     }
 
+    @Override
+    public void drawData(Canvas c, Highlight selection) {
+
+        int width = (int) mViewPortHandler.getChartWidth();
+        int height = (int) mViewPortHandler.getChartHeight();
+
+        Bitmap drawBitmap = mDrawBitmap == null ? null : mDrawBitmap.get();
+
+        if (drawBitmap == null
+                || (drawBitmap.getWidth() != width)
+                || (drawBitmap.getHeight() != height)) {
+
+            if (width > 0 && height > 0) {
+                drawBitmap = Bitmap.createBitmap(width, height, mBitmapConfig);
+                mDrawBitmap = new WeakReference<>(drawBitmap);
+                mBitmapCanvas = new Canvas(drawBitmap);
+            } else
+                return;
+        }
+
+        drawBitmap.eraseColor(Color.TRANSPARENT);
+
+        LineData lineData = mChart.getLineData();
+
+        for (ILineDataSet set : lineData.getDataSets()) {
+
+            if (set.isVisible())
+                drawDataSet(c, set, selection);
+        }
+
+        c.drawBitmap(drawBitmap, 0, 0, mRenderPaint);
+    }
+
     protected void drawDataSet(Canvas c, ILineDataSet dataSet) {
+        drawDataSet(c, dataSet, null);
+    }
+
+    protected void drawDataSet(Canvas c, ILineDataSet dataSet, Highlight selection) {
 
         if (dataSet.getEntryCount() < 1)
             return;
@@ -115,7 +152,7 @@ public class LineChartRenderer extends LineRadarRenderer {
             default:
             case LINEAR:
             case STEPPED:
-                drawLinear(c, dataSet);
+                drawLinear(c, dataSet, selection);
                 break;
 
             case CUBIC_BEZIER:
@@ -291,7 +328,7 @@ public class LineChartRenderer extends LineRadarRenderer {
      * @param c
      * @param dataSet
      */
-    protected void drawLinear(Canvas c, ILineDataSet dataSet) {
+    protected void drawLinear(Canvas c, ILineDataSet dataSet, Highlight selection) {
 
         int entryCount = dataSet.getEntryCount();
 
@@ -377,45 +414,69 @@ public class LineChartRenderer extends LineRadarRenderer {
 
         } else { // only one color per dataset
 
+            int startPoint = mXBounds.min;
+            int endPoint = mXBounds.range + mXBounds.min;
+
+            int[] startPoints = {startPoint};
+            int[] endPoints = {endPoint};
+            int[] colors = {dataSet.getColor()};
+
+            // if we have a selection going on, render two-part chart with different colors
+            if (selection != null) {
+
+                Entry selectionEntry = entryForHighlight(selection);
+                if (selectionEntry != null) {
+
+                    startPoints = new int[] {startPoint, dataSet.getEntryIndex(selectionEntry)};
+                    // move endPoint to one past the last element to get a smoother rendering
+                    endPoints = new int[] {Math.min(endPoint, dataSet.getEntryIndex(selectionEntry) + 1), endPoint};
+
+                    int color = dataSet.getColor();
+                    colors = new int[] {Color.argb((int) Math.round(0.25 * 255), Color.red(color), Color.green(color), Color.blue(color)), color};
+                }
+            }
+
             if (mLineBuffer.length < Math.max((entryCount) * pointsPerEntryPair, pointsPerEntryPair) * 2)
                 mLineBuffer = new float[Math.max((entryCount) * pointsPerEntryPair, pointsPerEntryPair) * 4];
 
-            Entry e1, e2;
+            for (int i = 0; i < startPoints.length; i++) {
 
-            e1 = dataSet.getEntryForIndex(mXBounds.min);
+                Entry e1, e2;
+                e1 = dataSet.getEntryForIndex(startPoints[i]);
 
-            if (e1 != null) {
+                if (e1 != null) {
 
-                int j = 0;
-                for (int x = mXBounds.min; x <= mXBounds.range + mXBounds.min; x++) {
+                    int j = 0;
+                    for (int x = startPoints[i]; x <= endPoints[i]; x++) {
 
-                    e1 = dataSet.getEntryForIndex(x == 0 ? 0 : (x - 1));
-                    e2 = dataSet.getEntryForIndex(x);
+                        e1 = dataSet.getEntryForIndex(x == startPoints[i] ? startPoints[i] : (x - 1));
+                        e2 = dataSet.getEntryForIndex(x);
 
-                    if (e1 == null || e2 == null) continue;
+                        if (e1 == null || e2 == null) continue;
 
-                    mLineBuffer[j++] = e1.getX();
-                    mLineBuffer[j++] = e1.getY() * phaseY;
-
-                    if (isDrawSteppedEnabled) {
-                        mLineBuffer[j++] = e2.getX();
+                        mLineBuffer[j++] = e1.getX();
                         mLineBuffer[j++] = e1.getY() * phaseY;
+
+                        if (isDrawSteppedEnabled) {
+                            mLineBuffer[j++] = e2.getX();
+                            mLineBuffer[j++] = e1.getY() * phaseY;
+                            mLineBuffer[j++] = e2.getX();
+                            mLineBuffer[j++] = e1.getY() * phaseY;
+                        }
+
                         mLineBuffer[j++] = e2.getX();
-                        mLineBuffer[j++] = e1.getY() * phaseY;
+                        mLineBuffer[j++] = e2.getY() * phaseY;
                     }
 
-                    mLineBuffer[j++] = e2.getX();
-                    mLineBuffer[j++] = e2.getY() * phaseY;
-                }
+                    if (j > 0) {
+                        trans.pointValuesToPixel(mLineBuffer);
 
-                if (j > 0) {
-                    trans.pointValuesToPixel(mLineBuffer);
+                        final int size = Math.max((mXBounds.range + 1) * pointsPerEntryPair, pointsPerEntryPair) * 2;
 
-                    final int size = Math.max((mXBounds.range + 1) * pointsPerEntryPair, pointsPerEntryPair) * 2;
+                        mRenderPaint.setColor(colors[i]);
 
-                    mRenderPaint.setColor(dataSet.getColor());
-
-                    canvas.drawLines(mLineBuffer, 0, size, mRenderPaint);
+                        canvas.drawLines(mLineBuffer, 0, size, mRenderPaint);
+                    }
                 }
             }
         }
@@ -681,6 +742,24 @@ public class LineChartRenderer extends LineRadarRenderer {
                 }
             }
         }
+    }
+
+    // returns entry that is highlighted
+    Entry entryForHighlight(Highlight highlight) {
+
+        LineData lineData = mChart.getLineData();
+
+        ILineDataSet set = lineData.getDataSetByIndex(highlight.getDataSetIndex());
+
+        if (set == null || !set.isHighlightEnabled())
+            return null;
+
+        Entry entry = set.getEntryForXValue(highlight.getX(), highlight.getY());
+
+        if (!isInBoundsX(entry, set))
+            return null;
+
+        return entry;
     }
 
     @Override

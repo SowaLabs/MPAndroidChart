@@ -129,6 +129,15 @@ public abstract class DataRenderer extends Renderer {
     public abstract void drawData(Canvas c);
 
     /**
+     * Draws a chart highlighting the data part from selection until the end
+     *
+     * @param c
+     * @param selection
+     */
+    public void drawData(Canvas c, Highlight selection) {}
+
+
+    /**
      * Loops over all Entrys and draws their values.
      *
      * @param c
