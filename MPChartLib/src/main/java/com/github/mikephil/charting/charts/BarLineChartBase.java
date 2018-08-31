@@ -29,6 +29,7 @@ import com.github.mikephil.charting.jobs.MoveViewJob;
 import com.github.mikephil.charting.jobs.ZoomJob;
 import com.github.mikephil.charting.listener.BarLineChartTouchListener;
 import com.github.mikephil.charting.listener.OnDrawListener;
+import com.github.mikephil.charting.renderer.LineChartRenderer;
 import com.github.mikephil.charting.renderer.XAxisRenderer;
 import com.github.mikephil.charting.renderer.YAxisRenderer;
 import com.github.mikephil.charting.utils.MPPointD;
@@ -239,7 +240,18 @@ public abstract class BarLineChartBase<T extends BarLineScatterCandleBubbleData<
             canvas.clipRect(mViewPortHandler.getContentRect());
         }
 
-        mRenderer.drawData(canvas);
+        // only LineChartRenderer has drawData(context:, withSelection:)
+        // check if we have a selection and drag enabled
+        // used for visually separating selected part of the chart with different colors
+        if (isHighlightPerDragEnabled()
+                && valuesToHighlight()
+                && mIndicesToHighlight.length == 1
+                && mRenderer instanceof LineChartRenderer) {
+
+            mRenderer.drawData(canvas, mIndicesToHighlight[0]);
+        } else {
+            mRenderer.drawData(canvas);
+        }
 
         if (!mXAxis.isDrawGridLinesBehindDataEnabled())
             mXAxisRenderer.renderGridLines(canvas);
