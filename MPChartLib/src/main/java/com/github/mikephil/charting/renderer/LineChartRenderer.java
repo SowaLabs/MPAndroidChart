@@ -471,7 +471,8 @@ public class LineChartRenderer extends LineRadarRenderer {
                     if (j > 0) {
                         trans.pointValuesToPixel(mLineBuffer);
 
-                        final int size = Math.max((mXBounds.range + 1) * pointsPerEntryPair, pointsPerEntryPair) * 2;
+                        final int range = endPoints[i] - startPoints[i];
+                        final int size = Math.max((range + 1) * pointsPerEntryPair, pointsPerEntryPair) * 2;
 
                         mRenderPaint.setColor(colors[i]);
 
