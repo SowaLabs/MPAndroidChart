@@ -222,7 +222,6 @@ public class LineChartRenderer extends LineRadarRenderer {
 
     protected void drawCubicBezier(ILineDataSet dataSet) {
 
-        float phaseX = Math.max(0.f, Math.min(1.f, mAnimator.getPhaseX()));
         float phaseY = mAnimator.getPhaseY();
 
         Transformer trans = mChart.getTransformer(dataSet.getAxisDependency());
@@ -559,12 +558,12 @@ public class LineChartRenderer extends LineRadarRenderer {
 
         // create a new path
         Entry currentEntry = null;
-        Entry previousEntry = null;
+        Entry previousEntry = entry;
         for (int x = startIndex + 1; x <= endIndex; x++) {
 
             currentEntry = dataSet.getEntryForIndex(x);
 
-            if (isDrawSteppedEnabled && previousEntry != null) {
+            if (isDrawSteppedEnabled) {
                 filled.lineTo(currentEntry.getX(), previousEntry.getY() * phaseY);
             }
 
@@ -592,7 +591,7 @@ public class LineChartRenderer extends LineRadarRenderer {
 
                 ILineDataSet dataSet = dataSets.get(i);
 
-                if (!shouldDrawValues(dataSet))
+                if (!shouldDrawValues(dataSet) || dataSet.getEntryCount() < 1)
                     continue;
 
                 // apply the text-styling defined by the DataSet
