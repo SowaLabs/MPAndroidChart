@@ -8,6 +8,7 @@ import android.graphics.Path;
 import android.graphics.drawable.Drawable;
 
 import com.github.mikephil.charting.animation.ChartAnimator;
+import com.github.mikephil.charting.charts.Chart;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
@@ -437,8 +438,9 @@ public class LineChartRenderer extends LineRadarRenderer {
 
             // if we have a selection going on, render two-part chart with different colors
             if (selection != null) {
+                boolean isHighlightMultipleEnabled = ((Chart)mChart).isHighlightMultipleEnabled();
 
-                Entry selectionEntry = entryForHighlight(selection);
+                Entry selectionEntry = isHighlightMultipleEnabled ? entryForHighlight(selection, dataSet) : entryForHighlight(selection);
                 if (selectionEntry != null) {
 
                     startPoints = new int[] {startPoint, dataSet.getEntryIndex(selectionEntry)};
@@ -776,6 +778,23 @@ public class LineChartRenderer extends LineRadarRenderer {
             return null;
 
         Entry entry = set.getEntryForXValue(highlight.getX(), highlight.getY());
+
+        if (!isInBoundsX(entry, set))
+            return null;
+
+        return entry;
+    }
+
+    private Entry entryForHighlight(Highlight highlight, ILineDataSet set) {
+        if (set == null || !set.isHighlightEnabled())
+            return null;
+
+        List<Entry> entriesForX = set.getEntriesForXValue(highlight.getX());
+        if (entriesForX.isEmpty()) {
+            return null;
+        }
+
+        Entry entry = entriesForX.get(0);
 
         if (!isInBoundsX(entry, set))
             return null;

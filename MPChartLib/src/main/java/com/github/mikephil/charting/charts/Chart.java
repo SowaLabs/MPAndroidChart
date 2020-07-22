@@ -82,6 +82,11 @@ public abstract class Chart<T extends ChartData<? extends IDataSet<? extends Ent
      */
     protected boolean mHighLightPerTapEnabled = true;
 
+    /** 
+     * Flag that indicates whether to highlight points on all datasets based on the touch event at a specific x coordinate
+    */
+    protected boolean mHighlightMultipleEnabled = false;
+
     /**
      * If set to true, chart continues to scroll after touch up
      */
@@ -516,6 +521,26 @@ public abstract class Chart<T extends ChartData<? extends IDataSet<? extends Ent
     public void setHighlightPerTapEnabled(boolean enabled) {
         mHighLightPerTapEnabled = enabled;
     }
+
+    /**
+     * Returns true if values can be highlighted via tap gesture, false if not.
+     *
+     * @return
+     */
+    public boolean isHighlightMultipleEnabled() {
+        return mHighlightMultipleEnabled;
+    }
+
+    /**
+     * Set this to false to prevent values from being highlighted by tap gesture.
+     * Values can still be highlighted via drag or programmatically. Default: true
+     *
+     * @param enabled
+     */
+    public void setHighlightMultipleEnabled(boolean enabled) {
+        mHighlightMultipleEnabled = enabled;
+    }
+
 
     /**
      * Returns true if there are values to highlight, false if there are no
