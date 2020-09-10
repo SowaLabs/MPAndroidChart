@@ -43,6 +43,7 @@ import com.github.mikephil.charting.interfaces.datasets.IDataSet;
 import com.github.mikephil.charting.listener.ChartTouchListener;
 import com.github.mikephil.charting.listener.OnChartGestureListener;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
+import com.github.mikephil.charting.listener.OnChartScrollListener;
 import com.github.mikephil.charting.renderer.DataRenderer;
 import com.github.mikephil.charting.renderer.LegendRenderer;
 import com.github.mikephil.charting.utils.MPPointF;
@@ -142,6 +143,13 @@ public abstract class Chart<T extends ChartData<? extends IDataSet<? extends Ent
      */
     protected OnChartValueSelectedListener mSelectionListener;
 
+    /**
+     * listener that is called when the user starts or ends scrolling
+     */
+    protected OnChartScrollListener mScrollListener;
+
+    protected boolean mCurrentlyScrolling = false;
+
     protected ChartTouchListener mChartTouchListener;
 
     /**
@@ -180,6 +188,8 @@ public abstract class Chart<T extends ChartData<? extends IDataSet<? extends Ent
             mExtraRightOffset = 0.f,
             mExtraBottomOffset = 0.f,
             mExtraLeftOffset = 0.f;
+
+    private boolean mLongPressToScroll = false;
 
     /**
      * default constructor for initialization in code
@@ -317,6 +327,7 @@ public abstract class Chart<T extends ChartData<? extends IDataSet<? extends Ent
         mOffsetsCalculated = false;
         mIndicesToHighlight = null;
         mChartTouchListener.setLastHighlighted(null);
+        mCurrentlyScrolling = false;
         invalidate();
     }
 
@@ -734,12 +745,21 @@ public abstract class Chart<T extends ChartData<? extends IDataSet<? extends Ent
         setLastHighlighted(mIndicesToHighlight);
 
         if (callListener && mSelectionListener != null) {
-
             if (!valuesToHighlight())
                 mSelectionListener.onNothingSelected();
             else {
                 // notify the listener
                 mSelectionListener.onValueSelected(e, high);
+            }
+        }
+
+        if (callListener && mScrollListener != null) {
+            if (!valuesToHighlight()) {
+                mScrollListener.onScrollEnd();
+                mCurrentlyScrolling = false;
+            } else if (!mCurrentlyScrolling) {
+                mCurrentlyScrolling = true;
+                mScrollListener.onScrollStart();
             }
         }
 
@@ -1057,6 +1077,15 @@ public abstract class Chart<T extends ChartData<? extends IDataSet<? extends Ent
      */
     public void setOnChartValueSelectedListener(OnChartValueSelectedListener l) {
         this.mSelectionListener = l;
+    }
+
+    /**
+     * set a selection listener for the chart
+     *
+     * @param l
+     */
+    public void setOnChartScrollListener(OnChartScrollListener l) {
+        this.mScrollListener = l;
     }
 
     /**
@@ -1842,5 +1871,23 @@ public abstract class Chart<T extends ChartData<? extends IDataSet<? extends Ent
      */
     public void setUnbindEnabled(boolean enabled) {
         this.mUnbind = enabled;
+    }
+
+
+    /**
+     * Flag if the user is currently scrolling through the chart
+     *
+     * @return true if the user is currently scrolling
+     */
+    public boolean isCurrentlyScrolling() {
+        return mCurrentlyScrolling;
+    }
+
+    public void setLongPressToScroll(boolean longPressToScroll) {
+        mLongPressToScroll = longPressToScroll;
+    }
+
+    public boolean longPressToScrollEnabled() {
+        return mLongPressToScroll;
     }
 }
