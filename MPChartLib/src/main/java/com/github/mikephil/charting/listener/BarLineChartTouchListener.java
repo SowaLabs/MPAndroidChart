@@ -74,6 +74,8 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
      */
     private float mMinScalePointerDistance;
 
+    private boolean mIsDraggingMarker = false;
+
     /**
      * Constructor with initialization parameters.
      *
@@ -127,7 +129,7 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
                 saveTouchStart(event);
 
                 // set highlight immediately on initial touch
-                if (mChart.isHighlightPerDragEnabled())
+                if (mChart.isHighlightPerDragEnabled() && !mChart.longPressToScrollEnabled())
                     performHighlightDrag(event);
 
                 break;
@@ -212,7 +214,7 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
                             if (mChart.isHighlightPerDragEnabled()) {
                                 mLastGesture = ChartGesture.DRAG;
 
-                                if (mChart.isHighlightPerDragEnabled())
+                                if (mChart.isHighlightPerDragEnabled() && mIsDraggingMarker)
                                     performHighlightDrag(event);
                             }
                         }
@@ -274,6 +276,8 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
                 }
 
                 endAction(event);
+
+                mIsDraggingMarker = false;
 
                 break;
             case MotionEvent.ACTION_POINTER_UP:
@@ -619,6 +623,11 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
         if (l != null) {
 
             l.onChartLongPressed(e);
+        }
+
+        if (mChart.isHighlightPerDragEnabled() && mChart.longPressToScrollEnabled()) {
+            performHighlightDrag(e);
+            mIsDraggingMarker = true;
         }
     }
 
