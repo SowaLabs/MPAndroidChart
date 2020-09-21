@@ -13,7 +13,6 @@ import android.graphics.Paint.Align;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore.Images;
 import androidx.annotation.RequiresApi;
@@ -25,7 +24,6 @@ import android.view.ViewGroup;
 import android.view.ViewParent;
 
 import com.github.mikephil.charting.animation.ChartAnimator;
-import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.animation.Easing.EasingFunction;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.IMarker;
@@ -149,6 +147,10 @@ public abstract class Chart<T extends ChartData<? extends IDataSet<? extends Ent
     protected OnChartScrollListener mScrollListener;
 
     protected boolean mCurrentlyScrolling = false;
+
+    protected long mStartScrollingTimestamp;
+
+    public int mScrollThreshold = 200;
 
     protected ChartTouchListener mChartTouchListener;
 
@@ -757,9 +759,16 @@ public abstract class Chart<T extends ChartData<? extends IDataSet<? extends Ent
             if (!valuesToHighlight()) {
                 mScrollListener.onScrollEnd();
                 mCurrentlyScrolling = false;
-            } else if (!mCurrentlyScrolling) {
-                mCurrentlyScrolling = true;
+                mStartScrollingTimestamp = 0;
+            } else if (!mCurrentlyScrolling && mStartScrollingTimestamp == 0) {
+                // Mark the time of placing finger onto the chart
+                mStartScrollingTimestamp = System.currentTimeMillis();
+            }
+            long currTimestamp = System.currentTimeMillis();
+            if (!mCurrentlyScrolling && mStartScrollingTimestamp != 0 && currTimestamp - mStartScrollingTimestamp >= mScrollThreshold) {
+                // Fire the scrollStart only when the specified time has elapsed
                 mScrollListener.onScrollStart();
+                mCurrentlyScrolling = true;
             }
         }
 

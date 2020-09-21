@@ -129,8 +129,10 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
                 saveTouchStart(event);
 
                 // set highlight immediately on initial touch
-                if (mChart.isHighlightPerDragEnabled() && !mChart.longPressToScrollEnabled())
+                if (mChart.isHighlightPerDragEnabled() && !mChart.longPressToScrollEnabled()) {
                     performHighlightDrag(event);
+                    mIsDraggingMarker = true;
+                }
 
                 break;
 
