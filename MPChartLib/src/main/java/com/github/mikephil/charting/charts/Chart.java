@@ -150,7 +150,7 @@ public abstract class Chart<T extends ChartData<? extends IDataSet<? extends Ent
 
     protected long mStartScrollingTimestamp;
 
-    public int mScrollThreshold = 200;
+    public int mScrollDelay = 200;
 
     protected ChartTouchListener mChartTouchListener;
 
@@ -765,7 +765,7 @@ public abstract class Chart<T extends ChartData<? extends IDataSet<? extends Ent
                 mStartScrollingTimestamp = System.currentTimeMillis();
             }
             long currTimestamp = System.currentTimeMillis();
-            if (!mCurrentlyScrolling && mStartScrollingTimestamp != 0 && currTimestamp - mStartScrollingTimestamp >= mScrollThreshold) {
+            if (!mCurrentlyScrolling && mStartScrollingTimestamp != 0 && currTimestamp - mStartScrollingTimestamp >= mScrollDelay) {
                 // Fire the scrollStart only when the specified time has elapsed
                 mScrollListener.onScrollStart();
                 mCurrentlyScrolling = true;
@@ -1898,5 +1898,9 @@ public abstract class Chart<T extends ChartData<? extends IDataSet<? extends Ent
 
     public boolean longPressToScrollEnabled() {
         return mLongPressToScroll;
+    }
+
+    public void setLockScrollDelay(int delayMs) {
+        mScrollDelay = delayMs;
     }
 }
